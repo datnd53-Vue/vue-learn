@@ -2,6 +2,7 @@
 
 ## Digram 
 
+### 1. Nhìn tổng quan 
 
 ```
             Component Instance (Data / Methods / Computed)
@@ -24,6 +25,25 @@
                        Real DOM Update
 
 ```
+
+### Luồng hoạt động khi state thay đổi
+
+```
+Data Change
+    |
+    v
+Reactivity System detects change
+    |
+    v
+Re-render minimal component subtree
+    |
+    v
+Virtual DOM comparison (diff)
+    |
+    v
+Patch only changed parts in Real DOM
+```
+
 
 
 ## Tổng quan
