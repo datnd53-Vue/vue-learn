@@ -1,5 +1,31 @@
 # Vue Template Syntax – Tóm Tắt Ngắn Gọn
 
+## Digram 
+
+
+```
+            Component Instance (Data / Methods / Computed)
+                           |
+                           v
+                    Vue Template (HTML-based)
+                           |
+        ------------------------------------------------
+        |                      |                      |
+   {{ interpolation }}     v-bind / :attr         v-on / @event
+        |                      |                      |
+     Text Node           Attribute Binding        Event Listener
+        |                      |                      |
+        -------------------- Reactivity --------------------
+                           |
+                           v
+                    Virtual DOM Diff
+                           |
+                           v
+                       Real DOM Update
+
+```
+
+
 ## Tổng quan
 
 - Template của Vue nhìn giống HTML bình thường.
