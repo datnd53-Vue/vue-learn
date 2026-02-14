@@ -1,4 +1,4 @@
-# Vue Template Syntax – Tóm Tắt Ngắn Gọn
+# Vue Template Syntax
 
 ## Digram 
 
