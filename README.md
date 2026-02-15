@@ -187,4 +187,125 @@ Thiết kế tài liệu phản ánh thiết kế kiến trúc.
 Framework trưởng thành không phải cái có nhiều tính năng.  
 Mà là cái có cấu trúc rõ ràng.
 
+## Chi tiết OPTIONS API
 
+
+**Options: State**
+
+`data`, `props`, `computed`, `methods`, `watch`
+Định nghĩa state và logic theo kiểu object config.
+
+### 1. `data()` là hàm trả về **state ban đầu** của component.
+
+Nói gọn, **`data` trong Vue là cái “kho trạng thái ban đầu” của component**.
+
+Nó là một function trả về **một object thuần (plain object)**. Vue lấy object đó và biến nó thành **reactive** – tức là khi dữ liệu thay đổi, giao diện tự cập nhật. Không cần gọi refresh, không cần thao tác DOM tay chân. Vue lo.
+**`data()` phải trả về một object đơn giản. Ví dụ:**
+
+```js
+data() {
+  return { a: 1 }
+}
+```
+
+Sau khi component được tạo:
+
+* `this.$data` chính là object đó.
+* `this.a` thực chất là Vue proxy từ `this.$data.a`.
+
+Nói dễ hiểu: Vue đứng giữa làm “phiên dịch viên”. Bạn gọi `this.a`, nó chuyển xuống `this.$data.a`.
+
+**Tất cả các biến top-level phải khai báo sẵn trong `data()`.**
+
+Đừng kiểu:
+
+```js
+this.b = 2 // tự nhiên mọc thêm sau này
+```
+
+Vue vẫn cho thêm, nhưng **không khuyến khích**. Vì hệ thống reactivity hoạt động tốt nhất khi nó biết trước toàn bộ cấu trúc state. Nếu chưa có giá trị thì cứ để:
+
+```js
+return {
+  user: null,
+  loading: false,
+  error: undefined
+}
+```
+
+Khai báo trước giống như vẽ sơ đồ nhà trước khi xây. Đừng xây thêm phòng sau khi đã đổ móng.
+
+**Biến bắt đầu bằng `_` hoặc `$` sẽ không được proxy lên `this`.**
+
+Ví dụ:
+
+```js
+return {
+  _private: 123
+}
+```
+
+Bạn phải truy cập bằng:
+
+```js
+this.$data._private
+```
+
+Vì `$` và `_` có thể trùng với hệ thống nội bộ của Vue. Vue giữ “khu vực kỹ thuật” riêng.
+
+**Không nên trả về object có hành vi phức tạp như:**
+
+* Browser API object
+* Object có prototype riêng
+* Class instance
+
+`data()` chỉ nên chứa **state thuần túy**, không logic ẩn bên trong. State là dữ liệu. Hành vi là method. Phân biệt cho rõ ràng. Truyền thống phần mềm chuẩn mực là vậy.
+
+**Đừng dùng arrow function nếu bạn cần `this`:**
+
+```js
+data: () => ({ a: 1 }) // this sẽ không phải component
+```
+
+Arrow function không có `this` riêng. Nó mượn từ scope ngoài. Nếu cần instance thì dùng function thường:
+
+```js
+data() {
+  return { a: this.myProp }
+}
+```
+
+Hoặc nếu bắt buộc dùng arrow, bạn có thể dùng tham số đầu tiên:
+
+```js
+data: (vm) => ({ a: vm.myProp })
+```
+
+***Vue bọc object bạn trả về bằng `Proxy`. Proxy là cơ chế của JavaScript cho phép “chặn” việc đọc/ghi dữ liệu. Khi bạn đổi `this.a = 5`, Proxy phát hiện ra và kích hoạt cập nhật UI.
+Đây là reactive system. Nó giống như một hệ thần kinh nhỏ bên trong component. Động vào data là thần kinh bắn tín hiệu ra giao diện.***
+
+
+
+
+**Options: Rendering**
+
+`render()`, `template`
+Kiểm soát cách component hiển thị.
+
+**Options: Lifecycle**
+
+`mounted`, `created`, `beforeUnmount`…
+Vòng đời kiểu cũ.
+
+**Options: Composition**
+
+Cho phép trộn Composition API vào Options API.
+
+**Options: Misc**
+
+Mấy config khác như `name`, `components`, `directives`.
+
+**Component Instance**
+
+Mô tả `this` trong component có gì bên trong.
+Cái này dành cho ai muốn hiểu nội bộ sâu hơn.
