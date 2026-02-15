@@ -430,6 +430,130 @@ Cha lắng nghe:
 Đây chính là pattern một chiều kinh điển. Rõ ràng. Kiểm soát được. Không drama.
 
 
+
+
+
+### 3. **computed** – vũ khí tối thượng để xử lý dữ liệu một cách thanh lịch.
+
+Nếu `data` là kho nguyên liệu thô,
+thì `computed` là đầu bếp.
+
+Computed là **giá trị được tính toán dựa trên reactive state**, và nó **được cache**.
+
+**Khai báo kiểu cổ điển:**
+
+```js
+computed: {
+  fullName() {
+    return this.firstName + ' ' + this.lastName
+  }
+}
+```
+
+Dùng như biến bình thường:
+
+```js
+this.fullName
+```
+
+Không cần gọi như function. Vue tự tính khi cần.
+
+
+Điểm ăn tiền: **caching (ghi nhớ kết quả)**.
+
+Vue sẽ chỉ tính lại `fullName` khi `firstName` hoặc `lastName` thay đổi.
+
+Nếu bạn gọi `this.fullName` 100 lần trong template, nó không tính 100 lần.
+Nó nhớ kết quả. Thông minh. Không lãng phí CPU.
+
+So với method:
+
+```js
+methods: {
+  fullName() {
+    return this.firstName + ' ' + this.lastName
+  }
+}
+```
+
+Mỗi lần render, method sẽ chạy lại. Không cache. Không thương lượng.
+
+Computed giống như một bộ não biết ghi nhớ.
+Method giống như người quên trước quên sau, mỗi lần đều làm lại từ đầu.
+
+
+**Computed hoạt động nhờ hệ thống dependency tracking.**
+
+Vue theo dõi xem trong computed bạn đọc những reactive property nào.
+Nó tạo một “đường dây thần kinh” liên kết giữa chúng.
+
+Khi dependency thay đổi → computed bị đánh dấu “dirty” → lần truy cập tiếp theo sẽ tính lại.
+
+Cơ chế này dựa trên `Proxy` và effect tracking bên trong hệ reactivity của Vue.
+Không ma thuật. Chỉ là JavaScript nâng cao.
+
+**Computed cũng có thể có setter.**
+
+```js
+computed: {
+  fullName: {
+    get() {
+      return this.firstName + ' ' + this.lastName
+    },
+    set(value) {
+      const parts = value.split(' ')
+      this.firstName = parts[0]
+      this.lastName = parts[1]
+    }
+  }
+}
+```
+
+Giờ bạn có thể:
+
+```js
+this.fullName = "John Doe"
+```
+
+Vue sẽ gọi setter.
+Đây là cách v-model hoạt động phía sau hậu trường.
+
+
+**Khi nào nên dùng computed?**
+
+* Khi cần biến đổi dữ liệu để hiển thị
+* Khi lọc list
+* Khi tính toán dựa trên nhiều state
+* Khi cần cache tự động
+
+**Khi nào không nên?**
+
+* Khi xử lý async
+* Khi có side effect (gọi API, thay đổi state khác)
+
+Computed phải thuần. Nó là toán học.
+Input giống nhau → output giống nhau.
+
+Nếu bạn nhét logic bẩn vào computed, bạn đang phá kiến trúc.
+
+**Ví dụ thực tế:**
+
+```js
+computed: {
+  activeUsers() {
+    return this.users.filter(u => u.active)
+  }
+}
+```
+
+Mỗi khi `users` thay đổi → danh sách activeUsers cập nhật.
+
+Bạn không phải quản lý thủ công. Vue lo.
+
+
+
+
+
 **Options: Rendering**
 
 `render()`, `template`
