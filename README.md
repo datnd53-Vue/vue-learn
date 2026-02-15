@@ -840,10 +840,433 @@ Cảm biến không tạo ra giá trị mới. Nó chỉ phát hiện và kích 
 `render()`, `template`
 Kiểm soát cách component hiển thị.
 
+
+### 1. **`render()`**.
+
+Đây là lúc ta bỏ template HTML ra khỏi khung an toàn và nhìn thẳng vào động cơ thật của Vue.
+
+Template bạn viết:
+
+```html
+<div>{{ message }}</div>
+```
+
+Thực ra chỉ là cú pháp “dễ đọc cho con người”.
+Vue sẽ **biên dịch nó thành render function**.
+
+Render mới là thứ chạy thật.
+
+**Cấu trúc cơ bản:**
+
+```js
+import { h } from 'vue'
+
+export default {
+  render() {
+    return h('div', this.message)
+  }
+}
+```
+
+`h` là viết tắt của **hyperscript**.
+Nó tạo ra một **VNode (Virtual DOM node)**.
+
+VNode = object mô tả DOM.
+Không phải DOM thật. Chỉ là bản mô tả.
+
+Vue sẽ so sánh VNode cũ và mới (diffing), rồi cập nhật DOM thật một cách tối ưu.
+
+Template:
+
+```html
+<button @click="increment">{{ count }}</button>
+```
+
+Tương đương gần như:
+
+```js
+render() {
+  return h(
+    'button',
+    { onClick: this.increment },
+    this.count
+  )
+}
+```
+
+Thấy chưa. Không ma thuật.
+Chỉ là function trả về object mô tả cấu trúc UI.
+
+**Vì sao tồn tại render()?**
+
+Vì:
+
+1. Template có giới hạn
+2. Render cho phép bạn viết logic động cực linh hoạt
+3. Các thư viện UI thường dùng render function để build component động
+
+Ví dụ:
+
+```js
+render() {
+  return this.items.map(item =>
+    h('li', { key: item.id }, item.name)
+  )
+}
+```
+
+Bạn có thể viết điều kiện, vòng lặp, dynamic structure mà không phụ thuộc vào cú pháp template.
+
+**Một điểm rất quan trọng:**
+
+Render function chạy mỗi lần component re-render.
+
+Tức là mỗi khi reactive dependency đổi → Vue gọi lại `render()` → tạo VNode mới → so sánh → cập nhật DOM.
+
+Đây là chu trình lõi:
+
+State đổi → render chạy → Virtual DOM diff → DOM update.
+
+**Render giúp bạn hiểu Vue sâu hơn.**
+
+Template là lớp sơn.
+Render là khung xương thép.
+
+Nếu bạn hiểu render, bạn hiểu vì sao Vue nhanh.
+Vì Vue không “vẽ lại tất cả”. Nó so sánh cây VNode và chỉ cập nhật phần khác biệt.
+
+**Một chút triết học frontend:**
+
+DOM thật chậm.
+JavaScript object nhanh.
+
+Vue thao tác trên VNode (object) trước.
+Rồi tối ưu hóa việc chạm vào DOM thật.
+
+Đó là lý do framework hiện đại dùng Virtual DOM.
+
+**Khi nào bạn cần viết render?**
+
+* Khi viết thư viện UI
+* Khi cần dynamic component cực phức tạp
+* Khi template không đủ linh hoạt
+* Khi làm renderless component
+
+Còn nếu làm app bình thường?
+Template là quá đủ.
+
+**Một lưu ý:**
+
+Đừng viết render nếu bạn không cần.
+Template rõ ràng hơn, dễ maintain hơn.
+
+Render là dao mổ phẫu thuật.
+Không phải dao gọt trái cây.
+
+
+
+
 ## **Options: Lifecycle**
 
 `mounted`, `created`, `beforeUnmount`…
 Vòng đời kiểu cũ.
+
+
+
+### 1. **`mounted`** — thời khắc component chính thức “ra đời” trên DOM.
+
+Trong Vue (Options API), `mounted()` là một **lifecycle hook**. Tức là một điểm móc trong vòng đời của component. Vue sẽ gọi nó **sau khi component đã được render lần đầu và gắn vào DOM thật**.
+
+Cơ bản:
+
+```js
+export default {
+  mounted() {
+    console.log('Component đã được mount')
+  }
+}
+```
+
+Thời điểm này, bạn có thể truy cập DOM thật qua `this.$el`.
+
+**Vòng đời ngắn gọn để định vị cho rõ:**
+
+1. beforeCreate
+2. created
+3. beforeMount
+4. mounted  ← bạn đang ở đây
+5. beforeUpdate
+6. updated
+7. beforeUnmount
+8. unmounted
+
+`created()` thì data đã sẵn sàng nhưng **DOM chưa tồn tại**.
+`mounted()` thì DOM đã có thật trong trang.
+
+Khác biệt này cực quan trọng.
+
+**Khi nào dùng mounted?**
+
+1. Gọi API lần đầu
+2. Khởi tạo thư viện bên ngoài (chart, map, slider…)
+3. Truy cập DOM trực tiếp
+4. Đo kích thước phần tử
+
+Ví dụ:
+
+```js
+mounted() {
+  console.log(this.$el.offsetHeight)
+}
+```
+
+Nếu bạn làm việc này trong `created()`, nó sẽ undefined. Vì DOM chưa được gắn.
+
+**Một ví dụ thực tế hơn:**
+
+```js
+mounted() {
+  this.fetchUsers()
+}
+```
+
+Gọi API khi component hiển thị.
+Rõ ràng. Trực quan. Hợp logic.
+
+**Tuy nhiên, đừng nhầm lẫn:**
+
+Mounted không có nghĩa là mọi thứ con bên trong đã sẵn sàng tuyệt đối trong mọi tình huống async phức tạp. Nó chỉ đảm bảo component hiện tại đã mount.
+
+Nếu cần chắc chắn DOM update xong sau khi state đổi, bạn dùng:
+
+```js
+this.$nextTick(() => {
+  // DOM đã update xong
+})
+```
+
+`nextTick` nghĩa là đợi Vue flush xong chu kỳ cập nhật DOM.
+
+**Một sai lầm hay gặp:**
+
+Nhét quá nhiều logic vào mounted.
+
+Mounted nên dùng cho **khởi tạo**.
+Không phải để làm mọi thứ.
+
+Tư duy đúng:
+
+* Data chuẩn bị ở data()
+* Logic thuần ở computed
+* Hành động ở methods
+* Phản ứng ở watch
+* Khởi tạo khi DOM sẵn sàng ở mounted
+
+Mỗi phần đúng vai trò.
+
+**Một điểm thú vị về mặt kiến trúc:**
+
+Mounted chỉ chạy ***một lần cho mỗi lần component được mount***.
+
+Nếu component bị destroy và mount lại → nó chạy lại.
+
+Nhưng nếu chỉ re-render vì state đổi → mounted không chạy lại.
+
+Vì lifecycle khác với reactivity cycle.
+
+Đây là hai hệ thống khác nhau:
+
+* Reactive update cycle (render, update)
+* Lifecycle hook system
+
+
+### 2. **`created()`** — khoảnh khắc component vừa được sinh ra trong bộ nhớ, nhưng **chưa chạm vào DOM**.
+
+Nó chạy sau khi:
+
+* Vue đã tạo instance
+* Reactive `data` đã sẵn sàng
+* `props`, `methods`, `computed`, `watch` đã được thiết lập
+
+Nhưng DOM? Chưa có.
+
+Cơ bản:
+
+```js
+export default {
+  created() {
+    console.log('Instance đã được tạo')
+    console.log(this.count) // truy cập được data
+  }
+}
+```
+
+Ở đây bạn có thể dùng `this`, truy cập state, gọi method bình thường.
+
+**Khác biệt mấu chốt giữa `created` và `mounted`:**
+
+* `created()` → có data, chưa có DOM
+* `mounted()` → có cả data và DOM
+
+Nếu bạn cần:
+
+* Chuẩn bị dữ liệu
+* Gọi API không phụ thuộc DOM
+* Thiết lập logic ban đầu
+
+→ `created()` là nơi phù hợp.
+
+Nếu bạn cần:
+
+* Đo kích thước phần tử
+* Gắn thư viện UI
+* Truy cập DOM trực tiếp
+
+→ phải đợi `mounted()`.
+
+
+Ví dụ thực tế:
+
+```js
+created() {
+  this.fetchUsers()
+}
+```
+
+Hoàn toàn hợp lý nếu bạn chỉ cần lấy dữ liệu.
+Không cần chờ DOM hiển thị rồi mới đi xin dữ liệu.
+
+Về mặt UX, nhiều người thích gọi API trong `created()` để tiết kiệm vài mili-giây. Vì nó chạy sớm hơn `mounted()` một chút.
+
+**Một điểm quan trọng về mặt nội bộ:**
+
+Trong `created()`, Vue đã hoàn tất quá trình:
+
+* Thiết lập reactivity
+* Proxy `data` và `props`
+* Khởi tạo watcher nội bộ
+
+Tức là hệ thần kinh đã nối xong.
+Chỉ là cơ thể chưa đứng lên (chưa mount vào DOM).
+
+**Sai lầm phổ biến:**
+
+```js
+created() {
+  console.log(this.$el) // undefined
+}
+```
+
+Đúng rồi. DOM chưa tồn tại. Đừng đòi hỏi quá sớm.
+
+**Một góc nhìn kiến trúc:**
+
+`created()` thuộc về **phase khởi tạo logic**.
+`mounted()` thuộc về **phase khởi tạo giao diện**.
+
+Tách hai thứ này ra giúp code sạch hơn.
+
+Logic không nên phụ thuộc vào UI nếu không cần.
+UI chỉ là biểu hiện của state.
+
+Đó là tư duy thiết kế hệ thống bền vững.
+
+**So sánh ngắn gọn để đóng khung:**
+
+beforeCreate → gần như chưa có gì
+created → có data, chưa có DOM
+beforeMount → sắp render
+mounted → đã render xong
+
+
+### 3. beforeMount
+
+**Thứ tự cho rõ timeline:**
+
+beforeCreate
+created
+beforeMount  ← bạn đang ở đây
+mounted
+
+`beforeMount()` chạy **ngay trước khi Vue render lần đầu và gắn component vào DOM thật**.
+
+Lúc này:
+
+* Data đã reactive
+* Props đã sẵn sàng
+* Computed, methods, watch đã setup
+* Template đã được compile thành render function
+* Nhưng DOM thật vẫn chưa xuất hiện
+
+Nói cách khác: mọi thứ đã chuẩn bị xong trong bộ nhớ, chỉ còn chưa “vẽ ra màn hình”.
+
+Cơ bản:
+
+```js
+export default {
+  beforeMount() {
+    console.log('Sắp mount rồi')
+  }
+}
+```
+
+**Khác gì `created()`?**
+
+created() → instance vừa được tạo
+beforeMount() → Vue đã chuẩn bị render, sắp gắn vào DOM
+
+Khác gì `mounted()`?
+
+mounted() → DOM đã gắn xong
+
+beforeMount giống như đứng sau cánh gà.
+mounted là bước ra ánh đèn.
+
+**Câu hỏi thực tế: có nên dùng beforeMount không?**
+
+Thẳng thắn: hiếm khi cần.
+
+Vì:
+
+* Nếu cần xử lý logic → dùng created
+* Nếu cần thao tác DOM → dùng mounted
+
+beforeMount nằm giữa hai cái đó. Không phải nơi lý tưởng cho logic nặng, cũng chưa thể đụng DOM.
+
+**Vậy nó có ích khi nào?**
+
+Chủ yếu để:
+
+* Debug lifecycle
+* Theo dõi chu trình render
+* Một số trường hợp đặc biệt khi bạn cần chặn hoặc ghi log trước lần render đầu
+
+Ví dụ:
+
+```js
+beforeMount() {
+  console.log('Render sắp diễn ra lần đầu')
+}
+```
+
+Sau đó Vue sẽ:
+
+1. Gọi render()
+2. Tạo VNode
+3. Patch vào DOM thật
+4. Rồi mới gọi mounted()
+
+**Một điểm kiến trúc thú vị:**
+
+`beforeMount()` chỉ chạy một lần trong suốt vòng đời mount.
+
+Re-render do state thay đổi không gọi lại beforeMount.
+Chỉ lifecycle mount/unmount mới gọi.
+
+Lifecycle và reactivity là hai dòng chảy khác nhau. Đừng trộn lẫn.
+
+
+
 
 ## **Options: Composition**
 
