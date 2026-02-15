@@ -1377,6 +1377,123 @@ Framework giúp 80%. 20% còn lại là trách nhiệm của lập trình viên.
 
 
 
+### 5. **`beforeDestroy()` là tên cũ của Vue 2**.
+
+Trong **Vue 3**, nó được đổi thành:
+
+```
+beforeUnmount()
+```
+
+Vì từ “destroy” nghe hơi… bạo lực. Vue 3 dùng “unmount” để nhất quán với hệ thống Virtual DOM.
+
+**Nếu bạn đang đọc tài liệu Vue 2 thì:**
+
+```
+beforeDestroy()
+destroyed()
+```
+
+Vue 3 tương đương:
+
+```
+beforeUnmount()
+unmounted()
+```
+
+Chức năng gần như giống nhau. Chỉ đổi tên cho hợp thời.
+
+**Vậy `beforeDestroy()` (Vue 2) / `beforeUnmount()` (Vue 3) làm gì?**
+
+Nó chạy **ngay trước khi component bị tháo khỏi DOM**.
+
+Lúc này:
+
+* Component vẫn còn tồn tại
+* DOM vẫn còn
+* Reactive system vẫn còn hoạt động
+* Bạn vẫn truy cập được `this`
+
+Ví dụ kiểu Vue 2:
+
+```js
+beforeDestroy() {
+  console.log('Sắp bị hủy')
+}
+```
+
+Vue 3 tương đương:
+
+```js
+beforeUnmount() {
+  console.log('Sắp unmount')
+}
+```
+
+**Khác gì `destroyed()` / `unmounted()`?**
+
+beforeDestroy → còn sống, chuẩn bị rời đi
+destroyed → đã rời đi hoàn toàn
+
+beforeDestroy giống như bạn đang dọn bàn trước khi rời khỏi văn phòng.
+destroyed là lúc bạn đã ra khỏi tòa nhà.
+
+**Khi nào dùng beforeDestroy?**
+
+1. Cleanup tài nguyên
+2. Thông báo cho hệ thống bên ngoài
+3. Gỡ event listener
+4. Hủy interval / observer
+
+Ví dụ:
+
+```js
+beforeDestroy() {
+  window.removeEventListener('scroll', this.handleScroll)
+}
+```
+
+Hoặc:
+
+```js
+beforeUnmount() {
+  clearInterval(this.timer)
+}
+```
+
+**Tại sao cần hook này nếu có unmounted?**
+
+Vì đôi khi bạn cần:
+
+* Truy cập DOM trước khi nó biến mất
+* Thực hiện thao tác cuối cùng khi state còn tồn tại
+
+Sau khi destroyed/unmounted chạy xong thì component coi như đã bị “tháo dây thần kinh”.
+
+**Một điều thú vị về kiến trúc:**
+
+Lifecycle hook này không liên quan đến re-render.
+
+Nó chỉ chạy khi component thực sự bị gỡ khỏi cây ứng dụng.
+
+State thay đổi 1000 lần cũng không gọi beforeDestroy.
+Chỉ khi v-if false hoặc route đổi trang.
+
+
+**Tóm lại rõ ràng:**
+
+Vue 2: beforeDestroy → destroyed
+Vue 3: beforeUnmount → unmounted
+
+Chức năng:
+
+* Chạy trước khi component bị gỡ khỏi DOM
+* Dùng để cleanup
+* Vẫn còn truy cập được state và DOM
+
+
+
+
 
 ## **Options: Composition**
 
