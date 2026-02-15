@@ -1,6 +1,6 @@
 # Câu hỏi: 
 
-## 1. Tại sao Vue cần chia ra Doc và Api 
+## question 1. Tại sao Vue cần chia ra Doc và Api 
 
 <img width="2048" height="1207" alt="image" src="https://github.com/user-attachments/assets/d0fb0d6a-e0a0-4334-8cfd-94c597ec821b" />
 
@@ -41,7 +41,7 @@ API trả lời “Cụ thể từng dòng nghĩa là gì?”
 - Interface là khái niệm chung & API là một loại interface.
 
 
-## 2. Chi tiết hơn về Api 
+## Question 2. Giải thích chi tiết hơn về Api 
 
 ### 1. GLOBAL API
 
@@ -61,95 +61,109 @@ Không thuộc riêng reactivity hay component nào, nhưng dùng khắp nơi.
 => Đây là “cách viết Vue kiểu mới” trong Vue 3. Tập trung vào logic hơn là cấu trúc option.
 
 **setup()**
-Điểm vào chính của ``Composition API``.
-Tất cả reactive state, logic, lifecycle hook mới đều khởi phát từ đây.
 
-Reactivity: Core
+Điểm vào chính của ``Composition API``.
+Tất cả ``reactive state, logic, lifecycle hook`` mới đều khởi phát từ đây.
+
+**Reactivity: Core**
+
 Mấy hàm cốt lõi như `ref()`, `reactive()`, `computed()`, `effect()`…
 Đây là trái tim của Vue 3. Proxy, dependency tracking, update DOM đều bắt đầu từ đây.
 
-Reactivity: Utilities
+**Reactivity: Utilities**
+
 Các helper như `toRefs()`, `isRef()`, `unref()`…
 Không tạo reactivity mới, nhưng giúp thao tác với nó gọn hơn.
 
-Reactivity: Advanced
+**Reactivity: Advanced**
+
 `shallowRef()`, `markRaw()`, `customRef()`…
 Dành cho người cần kiểm soát sâu về hiệu năng hoặc hành vi reactive.
 
-Lifecycle Hooks
+**Lifecycle Hooks**
+
 `onMounted()`, `onUpdated()`…
 Phiên bản Composition của vòng đời component.
 
-Dependency Injection
+**Dependency Injection**
+
 `provide()` và `inject()`
 Truyền dữ liệu xuyên nhiều tầng component mà không cần props lòng vòng.
 
-Helpers
+**Helpers**
 Mấy hàm hỗ trợ khác như `useSlots()`, `useAttrs()`…
 Công cụ phụ trợ khi viết component phức tạp.
 
----
 
-OPTIONS API
+### 3. OPTIONS API
 
 Đây là cách viết truyền thống của Vue 2. Vue 3 vẫn giữ để tương thích.
 
-Options: State
+**Options: State**
+
 `data`, `props`, `computed`, `methods`, `watch`
 Định nghĩa state và logic theo kiểu object config.
 
-Options: Rendering
+**Options: Rendering**
+
 `render()`, `template`
 Kiểm soát cách component hiển thị.
 
-Options: Lifecycle
+**Options: Lifecycle**
+
 `mounted`, `created`, `beforeUnmount`…
 Vòng đời kiểu cũ.
 
-Options: Composition
+**Options: Composition**
+
 Cho phép trộn Composition API vào Options API.
 
-Options: Misc
+**Options: Misc**
+
 Mấy config khác như `name`, `components`, `directives`.
 
-Component Instance
+**Component Instance**
+
 Mô tả `this` trong component có gì bên trong.
 Cái này dành cho ai muốn hiểu nội bộ sâu hơn.
 
----
 
-BUILT-INS
+### 4. BUILT-INS
 
 Những thứ Vue cung cấp sẵn.
 
-Directives
+**Directives**
+
 `v-if`, `v-for`, `v-model`, `v-bind`…
 Cú pháp đặc biệt trong template.
 
-Components
+**Components**
+
 Component built-in như `<Teleport>`, `<Suspense>`, `<KeepAlive>`…
 
-Special Elements
+**Special Elements**
+
 `<component>`, `<slot>`…
 Phần tử đặc biệt do Vue xử lý riêng.
 
-Special Attributes
+**Special Attributes**
+
 `key`, `ref`, `is`…
 Thuộc tính đặc biệt ảnh hưởng đến cơ chế render.
 
----
 
-SINGLE-FILE COMPONENT
+### 5. SINGLE-FILE COMPONENT
 
 Syntax Specification
 Cấu trúc file `.vue` gồm `<template>`, `<script>`, `<style>` hoạt động ra sao.
 
-<script setup>  
+``<script setup> ``
 Cú pháp sugar mới để viết Composition API gọn hơn.
 
----
 
-Tại sao phải chia vậy?
+
+  
+### Tại sao phải chia vậy?
 
 Vì Vue không chỉ là một thư viện nhỏ. Nó là một hệ sinh thái runtime:
 
@@ -169,8 +183,4 @@ Thiết kế tài liệu phản ánh thiết kế kiến trúc.
 Framework trưởng thành không phải cái có nhiều tính năng.  
 Mà là cái có cấu trúc rõ ràng.
 
-Và đây là insight quan trọng:  
-Khi bạn nhìn sidebar API của Vue, bạn đang nhìn vào kiến trúc nội bộ của framework được lộ ra ở mức bề mặt. Nó giống như nhìn sơ đồ não bộ qua hộp sọ.
-
-Hiểu được cách họ chia API là bạn bắt đầu hiểu cách họ tư duy hệ thống.
 
