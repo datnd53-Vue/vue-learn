@@ -43,6 +43,10 @@ API trả lời “Cụ thể từng dòng nghĩa là gì?”
 
 ## Question 2. Giải thích chi tiết hơn về Api 
 
+***chú ý**
+- ``COMPOSITION API`` và ``OPTIONS API`` mục đích là giống nhau, nó chỉ khác cách viết (dự án hiện tại đang là Vue 2 sử dụng OPTIONS API)
+=> có thể bỏ qua ``COMPOSITION API`` để tập trung vào ``OPTIONS API``
+
 ### 1. GLOBAL API
 
 => Đây là những thứ dùng ở cấp ứng dụng, không phải bên trong một component.
