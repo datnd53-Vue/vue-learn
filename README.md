@@ -1,6 +1,6 @@
-# Câu hỏi: 
 
-## question 1. Tại sao Vue cần chia ra Doc và Api 
+
+# question 1. Tại sao Vue cần chia ra Doc và Api 
 
 <img width="2048" height="1207" alt="image" src="https://github.com/user-attachments/assets/d0fb0d6a-e0a0-4334-8cfd-94c597ec821b" />
 
@@ -41,7 +41,7 @@ API trả lời “Cụ thể từng dòng nghĩa là gì?”
 - Interface là khái niệm chung & API là một loại interface.
 
 
-## Question 2. Giải thích chi tiết hơn về Api 
+# Question 2. Giải thích chi tiết hơn về Api 
 
 ***chú ý**
 - ``COMPOSITION API`` và ``OPTIONS API`` mục đích là giống nhau, nó chỉ khác cách viết (dự án hiện tại đang là Vue 2 sử dụng OPTIONS API)
@@ -187,10 +187,10 @@ Thiết kế tài liệu phản ánh thiết kế kiến trúc.
 Framework trưởng thành không phải cái có nhiều tính năng.  
 Mà là cái có cấu trúc rõ ràng.
 
-## Chi tiết OPTIONS API
+# Chi tiết OPTIONS API
 
 
-**Options: State**
+## **Options: State**
 
 `data`, `props`, `computed`, `methods`, `watch`
 Định nghĩa state và logic theo kiểu object config.
@@ -552,27 +552,308 @@ Bạn không phải quản lý thủ công. Vue lo.
 
 
 
+### 4. **methods** – tay chân thực thi của component.
+
+Nếu `data` là trạng thái,
+`computed` là bộ não suy nghĩ,
+thì `methods` là hành động thực tế.
+
+**Khai báo rất thẳng thắn:**
+
+```js
+export default {
+  methods: {
+    greet() {
+      console.log("Hello")
+    }
+  }
+}
+```
+
+Gọi trong template:
+
+```html
+<button @click="greet">Click</button>
+```
+
+Hoặc trong code:
+
+```js
+this.greet()
+```
+
+Không màu mè. Không cache. Chạy là chạy.
+
+**Khác biệt cốt lõi với computed:**
+
+* **Methods không cache**
+* Mỗi lần render → nếu được gọi → nó chạy lại
+
+Ví dụ:
+
+```html
+<p>{{ randomNumber() }}</p>
+```
+
+```js
+methods: {
+  randomNumber() {
+    return Math.random()
+  }
+}
+```
+
+Mỗi lần component re-render → số đổi. Vì method chạy lại.
+
+Nếu bạn viết cái này bằng computed, nó chỉ tính một lần cho đến khi dependency thay đổi.
+Sự khác biệt nằm ở bản chất.
+
+Computed = giá trị phụ thuộc.
+Method = hành động được gọi.
+
+**Methods thường dùng cho:**
+
+* Xử lý sự kiện (click, submit)
+* Gọi API
+* Thao tác async
+* Thay đổi state
+* Thực hiện side effect
+
+Ví dụ thực tế:
+
+```js
+methods: {
+  async fetchUsers() {
+    this.loading = true
+    const res = await fetch('/api/users')
+    this.users = await res.json()
+    this.loading = false
+  }
+}
+```
+
+Đây không thể là computed.
+Vì nó có async + side effect.
+
+Computed phải thuần. Methods thì không cần thuần. Nó có thể “bẩn” nếu cần.
 
 
-**Options: Rendering**
+**Một lỗi hay gặp: dùng method thay cho computed trong hiển thị list.**
+
+Sai:
+
+```html
+<li v-for="user in activeUsers()" :key="user.id">
+```
+
+Nếu `activeUsers()` lọc 1000 user, mỗi lần render nó sẽ chạy lại. Không cần thiết.
+
+Đúng:
+
+```js
+computed: {
+  activeUsers() {
+    return this.users.filter(u => u.active)
+  }
+}
+```
+
+Tối ưu và đúng tư duy reactive.
+
+**Methods có quyền thay đổi data:**
+
+```js
+methods: {
+  increment() {
+    this.count++
+  }
+}
+```
+
+Vue sẽ phát hiện sự thay đổi và re-render.
+
+Đây chính là vòng đời reactive cơ bản:
+
+User action → method chạy → data đổi → UI cập nhật.
+
+Không cần DOM manipulation thủ công như thời jQuery cổ đại.
+
+**Một điều cần nhớ:**
+
+Đừng lạm dụng method trong template cho logic nặng.
+
+Template nên declarative.
+Logic nặng nên ở computed hoặc chuẩn bị sẵn trong state.
+
+Code sạch là code phân vai rõ ràng.
+
+
+
+
+### 5. **watch** – hệ thống “trinh sát” của Vue.
+
+Nếu `computed` là người suy nghĩ dựa trên dữ liệu,
+thì `watch` là người đứng canh:
+“Ê, cái này vừa đổi đó, xử lý đi.”
+
+**Khai báo cơ bản:**
+
+```js
+export default {
+  watch: {
+    count(newVal, oldVal) {
+      console.log('Count changed:', oldVal, '→', newVal)
+    }
+  }
+}
+```
+
+Mỗi khi `this.count` thay đổi → function này chạy.
+
+Không cache. Không tính toán trả về giá trị.
+Chỉ phản ứng.
+
+**Khác computed ở bản chất:**
+
+Computed = trả về giá trị mới dựa trên dependency.
+Watch = thực hiện side effect khi dependency đổi.
+
+Side effect nghĩa là:
+
+* Gọi API
+* Ghi log
+* Lưu localStorage
+* Thao tác thứ gì đó ngoài reactive system
+
+Ví dụ thực tế:
+
+```js
+watch: {
+  searchQuery(newVal) {
+    this.fetchResults(newVal)
+  }
+}
+```
+
+User gõ chữ → searchQuery đổi → gọi API.
+
+Cái này không thể dùng computed.
+Vì computed phải thuần, không async side effect.
+
+**Watch có thể viết dạng object nâng cao:**
+
+```js
+watch: {
+  user: {
+    handler(newVal) {
+      console.log('User changed')
+    },
+    deep: true,
+    immediate: true
+  }
+}
+```
+
+Giải thích thẳng:
+
+`deep: true`
+Theo dõi cả thay đổi bên trong object.
+
+Ví dụ:
+
+```js
+this.user.name = 'John'
+```
+
+Nếu không có deep → watch không chạy.
+Vì reference không đổi.
+
+`immediate: true`
+Chạy handler ngay khi component được tạo.
+
+Không đợi thay đổi đầu tiên.
+
+**Một cách khác là watch bằng function:**
+
+```js
+watch(
+  () => this.count,
+  (newVal) => {
+    console.log(newVal)
+  }
+)
+```
+
+Dạng này phổ biến hơn trong Composition API, nhưng tư duy giống nhau.
+
+**Một cảnh báo quan trọng:**
+
+Đừng dùng watch nếu có thể dùng computed.
+
+Ví dụ sai:
+
+```js
+watch: {
+  firstName() {
+    this.fullName = this.firstName + ' ' + this.lastName
+  }
+}
+```
+
+Đây là anti-pattern.
+Bạn đang dùng watch để làm việc của computed.
+
+Đúng phải là:
+
+```js
+computed: {
+  fullName() {
+    return this.firstName + ' ' + this.lastName
+  }
+}
+```
+
+Watch chỉ nên dùng khi bạn cần phản ứng mang tính hành động, không phải tạo giá trị.
+
+**Triết lý phía sau:**
+
+Computed là “logic nội bộ”.
+Watch là “kết nối với thế giới bên ngoài”.
+
+Khi dữ liệu đổi và bạn cần chạm vào API, storage, router, analytics…
+Watch là cầu nối.
+
+**So sánh nhanh cho rõ ranh giới:**
+
+Data → trạng thái
+Computed → giá trị dẫn xuất
+Methods → hành động chủ động
+Watch → phản ứng bị động
+
+Computed giống toán học.
+Watch giống cảm biến chuyển động.
+
+Cảm biến không tạo ra giá trị mới. Nó chỉ phát hiện và kích hoạt hành động.
+
+## **Options: Rendering**
 
 `render()`, `template`
 Kiểm soát cách component hiển thị.
 
-**Options: Lifecycle**
+## **Options: Lifecycle**
 
 `mounted`, `created`, `beforeUnmount`…
 Vòng đời kiểu cũ.
 
-**Options: Composition**
+## **Options: Composition**
 
 Cho phép trộn Composition API vào Options API.
 
-**Options: Misc**
+## **Options: Misc**
 
 Mấy config khác như `name`, `components`, `directives`.
 
-**Component Instance**
+## **Component Instance**
 
 Mô tả `this` trong component có gì bên trong.
 Cái này dành cho ai muốn hiểu nội bộ sâu hơn.
