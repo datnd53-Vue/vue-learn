@@ -285,6 +285,149 @@ data: (vm) => ({ a: vm.myProp })
 Đây là reactive system. Nó giống như một hệ thần kinh nhỏ bên trong component. Động vào data là thần kinh bắn tín hiệu ra giao diện.***
 
 
+### 2. props
+
+=> thứ làm cho component không còn là cục đá vô tri, mà trở thành “đứa con biết nghe lời cha mẹ”.
+ **props là dữ liệu truyền từ component cha xuống component con**. Một chiều. Từ trên xuống. Không cãi. Không đảo chiều. Truyền thống gia phong rõ ràng.
+
+Về mặt type:
+
+```ts
+interface ComponentOptions {
+  props?: string[] | Record<string, PropOptions>
+}
+```
+
+**Có 2 cách khai báo.**
+
+Cách đơn giản:
+
+```js
+props: ['title', 'count']
+```
+
+Cách nghiêm túc, có kiểm soát kiểu dữ liệu:
+
+```js
+props: {
+  title: String,
+  count: {
+    type: Number,
+    required: true,
+    default: 0
+  }
+}
+```
+
+Vue sẽ kiểm tra type trong dev mode. Không phải TypeScript-level chặt chẽ, nhưng đủ để bắt lỗi ngớ ngẩn.
+
+
+**Cơ chế hoạt động thế nào?**
+
+Cha truyền xuống:
+
+```html
+<MyCard title="Hello" :count="5" />
+```
+
+Con nhận:
+
+```js
+export default {
+  props: ['title', 'count'],
+  created() {
+    console.log(this.title) // "Hello"
+  }
+}
+```
+
+Vue proxy props giống như data. Bạn truy cập bằng `this.title`.
+
+Nhưng có một luật thép: ***props là read-only trong component con.***
+
+Bạn không được làm:
+
+```js
+this.title = 'Changed'
+```
+
+Vì props đại diện cho state của cha. Nếu con sửa, luồng dữ liệu rối tung như dây tai nghe bỏ túi quần.
+
+Vue sẽ cảnh báo ngay.
+
+
+**Nếu muốn chỉnh sửa giá trị ban đầu của prop?**
+
+Cách đúng đắn là:
+
+```js
+props: ['initialValue'],
+data() {
+  return {
+    localValue: this.initialValue
+  }
+}
+```
+
+Hoặc dùng computed.
+
+Tư duy đúng là:
+Prop = input
+Data = state nội bộ
+Emit = output
+
+Component chuẩn mực giống một hàm thuần: nhận input, xử lý, phát output.
+
+
+Một chi tiết thú vị: **props cũng reactive**.
+
+Nếu cha thay đổi giá trị:
+
+```js
+this.count = 10
+```
+
+Con sẽ tự cập nhật lại. Không cần làm gì thêm. Vì Vue theo dõi dependency.
+
+**Default value trong props object phải là function nếu là object hoặc array:**
+
+Sai:
+
+```js
+default: []
+```
+
+Đúng:
+
+```js
+default: () => []
+```
+
+Lý do? Nếu không, tất cả instance sẽ dùng chung một array. Và rồi bạn có một bug nhìn như ma ám. Một instance sửa, instance khác tự đổi theo. Vì chúng đang dùng chung reference.
+
+**Một tầng triết học nhỏ ở đây.**
+
+Props giúp Vue giữ nguyên nguyên tắc:
+
+***Single Source of Truth*** – chỉ có một nguồn dữ liệu gốc.
+Cha quản lý state. Con hiển thị và tương tác.
+Khi con muốn thay đổi gì đó, nó không sửa props. Nó emit event lên cha.
+
+**Đó là cách hệ thống lớn giữ được sự minh bạch.**
+
+Ví dụ emit:
+
+```js
+this.$emit('update-count', newValue)
+```
+
+Cha lắng nghe:
+
+```html
+<MyCard :count="count" @update-count="count = $event" />
+```
+
+Đây chính là pattern một chiều kinh điển. Rõ ràng. Kiểm soát được. Không drama.
 
 
 **Options: Rendering**
