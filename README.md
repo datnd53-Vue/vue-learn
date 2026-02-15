@@ -1267,6 +1267,116 @@ Lifecycle và reactivity là hai dòng chảy khác nhau. Đừng trộn lẫn.
 
 
 
+### 4. **`unmounted()`** — lúc component rời khỏi sân khấu.
+
+**Thứ tự cuối vòng đời:**
+
+beforeUnmount
+unmounted  ← bạn đang ở đây
+
+
+`unmounted()` chạy **sau khi component đã bị gỡ khỏi DOM và hệ thống reactive đã bị teardown**.
+
+Tức là:
+
+* DOM của component đã bị xóa
+* Watcher nội bộ đã dừng
+* Effect đã cleanup
+* Component không còn tồn tại trong cây ứng dụng
+
+Cơ bản:
+
+```js
+export default {
+  unmounted() {
+    console.log('Component đã bị hủy')
+  }
+}
+```
+
+**Khi nào component bị unmount?**
+
+* v-if chuyển từ true → false
+* Route đổi trang
+* Component cha bị destroy
+* Dynamic component bị thay thế
+
+Vue sẽ:
+
+1. Gọi beforeUnmount()
+2. Gỡ DOM khỏi trang
+3. Cleanup reactivity
+4. Gọi unmounted()
+
+
+
+**`unmounted()` dùng để làm gì?**
+
+Cleanup.
+
+Đây là nguyên tắc vàng.
+
+Ví dụ bạn có:
+
+* setInterval
+* event listener thủ công
+* WebSocket
+* thư viện bên ngoài
+
+Nếu không dọn dẹp, bạn sẽ có memory leak.
+
+Ví dụ chuẩn chỉnh:
+
+```js
+export default {
+  mounted() {
+    this.timer = setInterval(() => {
+      console.log('tick')
+    }, 1000)
+  },
+  unmounted() {
+    clearInterval(this.timer)
+  }
+}
+```
+
+Không clearInterval → timer vẫn chạy dù component biến mất.
+Đó là bug kiểu “âm hồn còn vất vưởng”.
+
+**Một ví dụ khác:**
+
+```js
+mounted() {
+  window.addEventListener('resize', this.handleResize)
+},
+unmounted() {
+  window.removeEventListener('resize', this.handleResize)
+}
+```
+
+Gắn ở mounted → tháo ở unmounted.
+Có vay có trả. Lập trình tử tế.
+
+**Khác gì beforeUnmount?**
+
+beforeUnmount() chạy khi component vẫn còn sống.
+Bạn vẫn có thể truy cập DOM, state.
+
+unmounted() chạy sau khi mọi thứ đã bị tháo bỏ.
+
+Thông thường cleanup có thể đặt ở beforeUnmount hoặc unmounted, nhưng nếu cần chắc chắn DOM còn tồn tại khi xử lý cuối cùng → dùng beforeUnmount.
+
+**Một điều quan trọng về kiến trúc:**
+
+Vue tự cleanup watcher và reactive effect nội bộ.
+Bạn không cần lo phần đó.
+
+Nhưng những thứ bạn tự tạo ra ngoài Vue (interval, event listener, observer…) thì bạn phải tự dọn.
+
+Framework giúp 80%. 20% còn lại là trách nhiệm của lập trình viên.
+
+
+
 
 ## **Options: Composition**
 
